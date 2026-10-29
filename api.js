@@ -31,11 +31,16 @@ function renderNotes(notes) {
         const listItem = document.createElement("li");
         const title = document.createElement("h3");
         const body = document.createElement("p");
+        const deleteButton = document.createElement("button");
 
         title.textContent = note.title;
         body.textContent = note.body;
 
-        listItem.append(title, body);
+        deleteButton.textContent = "Delete";
+        deleteButton.type = "button";
+        deleteButton.addEventListener("click", () => deleteNote(note.id, listItem));
+
+        listItem.append(title, body, deleteButton);
         notesList.appendChild(listItem);
     });
 }
@@ -77,14 +82,19 @@ async function createNote(title, body) {
             })
         });
 
-        const listItem = document.createElement("li");
-        const heading = document.createElement("h3");
-        const content = document.createElement("p");
+       const listItem = document.createElement("li");
+const heading = document.createElement("h3");
+const content = document.createElement("p");
+const deleteButton = document.createElement("button");
+
+deleteButton.textContent = "Delete";
+deleteButton.type = "button";
+deleteButton.addEventListener("click", () => deleteNote(newNote.id, listItem));
 
         heading.textContent = newNote.title;
         content.textContent = newNote.body;
 
-        listItem.append(heading, content);
+        listItem.append(heading, content, deleteButton);
         notesList.prepend(listItem);
 
         showStatus("Note created successfully.", "success");
@@ -94,6 +104,29 @@ async function createNote(title, body) {
         return false;
     } finally {
         submitButton.disabled = false;
+    }
+}
+
+async function deleteNote(noteId, listItem) {
+    const deleteButton = listItem.querySelector("button");
+
+    deleteButton.disabled = true;
+    showStatus("Deleting note...");
+
+    try {
+        await request(`${API_URL}/${noteId}`, {
+            method: "DELETE"
+        });
+
+        listItem.remove();
+        showStatus("Note deleted successfully.", "success");
+
+        if (notesList.children.length === 0) {
+            showStatus("No notes remaining. Create one to get started.");
+        }
+    } catch (error) {
+        showStatus(`Could not delete note: ${error.message}`, "error");
+        deleteButton.disabled = false;
     }
 }
 
